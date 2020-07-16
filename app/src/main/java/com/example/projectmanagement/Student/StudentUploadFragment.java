@@ -1,16 +1,24 @@
 package com.example.projectmanagement.Student;
 
+import android.content.Context;
+import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.FileUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
+import android.app.ProgressDialog;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -21,6 +29,8 @@ import com.example.projectmanagement.Class.Student;
 import com.example.projectmanagement.R;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +39,14 @@ public class StudentUploadFragment extends Fragment {
     private SessionHandler session;
     private Student student;
     EditText title, domain ;
-    Button upload ;
+    TextView FileName;
+    Button upload, SelectFile;
+
+    private Uri fileUri;
+    private String filePath;
+
+    public static final int PICKFILE_RESULT_CODE = 1;
+    ProgressDialog dialog = null;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_student_upload, container, false);
@@ -37,7 +54,9 @@ public class StudentUploadFragment extends Fragment {
         student=session.getStudentDetails();
         title = root.findViewById(R.id.edtProjectTitle) ;
         domain = root.findViewById(R.id.edtDomain) ;
+        SelectFile = root.findViewById(R.id.Select_File_Button);
         upload = root.findViewById(R.id.btnUpload) ;
+        FileName = root.findViewById(R.id.Select_File_Name);
         Host = getString(R.string.localhost);
         URL_UPLOAD = Host+"/ProjectManagement/project.php";
         upload.setOnClickListener(new View.OnClickListener() {
@@ -46,8 +65,32 @@ public class StudentUploadFragment extends Fragment {
                 uploadData() ;
             }
         });
+        SelectFile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
+                chooseFile.setType("application/pdf");
+                chooseFile = Intent.createChooser(chooseFile, "Choose a file");
+                startActivityForResult(chooseFile, PICKFILE_RESULT_CODE);
+            }
+        });
         return root;
     }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case PICKFILE_RESULT_CODE:
+                if (resultCode == -1) {
+                    fileUri = data.getData();
+                    filePath = fileUri.getPath();
+                    FileName.setText(filePath);
+                }
+                break;
+        }
+    }
+
+
 
     private void uploadData() {
         final String titleString = title.getText().toString() ;
@@ -99,5 +142,6 @@ public class StudentUploadFragment extends Fragment {
             RequestQueue requestQueue = Volley.newRequestQueue(getActivity());
             requestQueue.add(stringRequest);
         }
+
     }
 }
